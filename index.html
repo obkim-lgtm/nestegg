@@ -260,6 +260,14 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer}
 .float{animation:float 2.5s ease-in-out infinite}
 .hatch{animation:hatch .6s ease-in-out}
 .bounce-in{animation:bounce-in .4s cubic-bezier(.34,1.4,.64,1)}
+@keyframes egg-show{0%,28%{opacity:1;transform:translateY(0)}13%{transform:translateY(-4px)}32%,33%{opacity:1;transform:rotate(-10deg)scale(1.1)}34%,35%{opacity:1;transform:rotate(10deg)scale(1.15)}36%,100%{opacity:0;transform:scale(0)}}
+@keyframes hatch-show{0%,35%{opacity:0;transform:scale(0)}36%{opacity:1;transform:scale(1.3)}40%,64%{opacity:1;transform:scale(1)}68%,100%{opacity:0;transform:scale(0)}}
+@keyframes chick-show{0%,64%{opacity:0;transform:scale(0)}65%{opacity:1;transform:scale(1.3)}69%,90%{opacity:1;transform:translateY(0)}93%{transform:translateY(-4px)}96%,100%{opacity:0;transform:scale(0)}}
+.login-logo-wrap{position:relative;width:72px;height:72px;font-size:64px;line-height:72px;text-align:center;margin:0 auto 12px}
+.login-logo-wrap span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;animation-duration:4s;animation-iteration-count:infinite;animation-timing-function:ease-in-out}
+.ll-egg{animation-name:egg-show}
+.ll-hatch{animation-name:hatch-show}
+.ll-chick{animation-name:chick-show}
 </style>
 </head>
 <body>
@@ -267,7 +275,11 @@ input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer}
 <!-- 로그인 화면 -->
 <div id="login-screen" style="display:flex;position:fixed;inset:0;z-index:999;background:var(--bg,#fff9f0);
   flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;font-family:'Nunito',system-ui,sans-serif">
-  <div style="font-size:64px;margin-bottom:12px;animation:float 2.5s ease-in-out infinite">&#x1F95A;</div>
+  <div class="login-logo-wrap">
+    <span class="ll-egg">🥚</span>
+    <span class="ll-hatch">🐣</span>
+    <span class="ll-chick">🐥</span>
+  </div>
   <div style="font-size:28px;font-weight:800;color:#ff9800;margin-bottom:6px">NestEgg</div>
   <div style="font-size:15px;color:#a08060;font-weight:600;margin-bottom:48px;text-align:center;line-height:1.6">
     가계부를 스마트하게<br>절약 습관을 함께 키워요
