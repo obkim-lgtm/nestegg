@@ -1479,7 +1479,7 @@ function renderCatResult(){
     const list=cats.filter(c=>!c.isUnset).map(c=>({...c,amt:sums[c.id]||0})).sort((a,b)=>b.amt-a.amt);
     const total=list.reduce((s,c)=>s+c.amt,0);const maxAmt=list[0]?.amt||1;
     if(total===0){resultEl.innerHTML='<div style="font-size:15px;color:#a08060;padding:12px 0;text-align:center">아직 지출 기록이 없어요 &#x1F425;</div>';return;}
-    resultEl.innerHTML=catBarHTML(list,total,maxAmt);
+    resultEl.innerHTML=catBarHTML(list,total,maxAmt,false,null);
   } else {
     // month mode
     const amr=recs.filter(r=>r.date?.startsWith(mk(acy,acm))&&r.budgetType!=='special');
@@ -1498,12 +1498,24 @@ function renderCatResult(){
     const list=cats.filter(c=>!c.isUnset).map(c=>({...c,amt:sums[c.id]||0})).sort((a,b)=>b.amt-a.amt);
     const maxAmt=list[0]?.amt||1;
     if(aTotal===0){resultEl.innerHTML='<div style="font-size:15px;color:#a08060;padding:12px 0;text-align:center">이 달 지출 기록이 없어요</div>';return;}
-    resultEl.innerHTML=catBarHTML(list,aTotal,maxAmt,true);
+    resultEl.innerHTML=catBarHTML(list,aTotal,maxAmt,true,mk(acy,acm));
   }
 }
 
-function catBarHTML(list,total,maxAmt,showZero){
-  return list.filter(c=>showZero||c.amt>0).map((c,i,arr)=>`
+function catBarHTML(list,total,maxAmt,showZero,datePrefix){
+  return list.filter(c=>showZero||c.amt>0).map((c,i,arr)=>{
+    const cid=c.id.replace(/[^a-z0-9]/gi,'_');
+    const catRecs=recs.filter(r=>r.category===c.id&&r.budgetType!=='special'&&r.type!=='nospend'
+      &&(datePrefix?r.date?.startsWith(datePrefix):r.date>=`${SY}-${pad(SM)}-01`)
+    ).sort((a,b)=>b.date.localeCompare(a.date)||b.ts-a.ts);
+    const detailHTML=catRecs.length?catRecs.map(r=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5e6cc">
+        <div style="font-size:11px;font-family:monospace;color:#a08060;flex-shrink:0">${r.date.slice(5).replace('-','/')}</div>
+        <div style="flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.memo}</div>
+        <div style="font-size:13px;font-weight:800;flex-shrink:0">\u20a9${r.amount.toLocaleString()}</div>
+      </div>`).join('')
+      :'<div style="font-size:13px;color:#a08060;padding:8px 0;text-align:center">내역 없음</div>';
+    return`
     <div style="margin-bottom:${i<arr.length-1?11:0}px;opacity:${c.amt===0?.3:1}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
         <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:7px">
@@ -1515,10 +1527,26 @@ function catBarHTML(list,total,maxAmt,showZero){
         </div>
       </div>
       ${c.amt>0?`<div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:${c.amt/maxAmt*100}%;background:${c.color}"></div></div>`:''}
-    </div>`).join('')+`
+      ${c.amt>0?`
+      <button onclick="toggleCatDetail('${cid}')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:5px 2px;background:none;border:none;cursor:pointer;font-family:inherit;margin-top:2px">
+        <span style="font-size:12px;color:#a08060;font-weight:700">내역 ${catRecs.length}건</span>
+        <span style="font-size:12px;color:#a08060" id="cat-arr-${cid}">&#x25BC;</span>
+      </button>
+      <div id="cat-detail-${cid}" style="display:none">${detailHTML}</div>`:''}
+    </div>`;
+  }).join('')+`
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5e6cc;display:flex;justify-content:space-between;font-size:15px;font-weight:800">
       <span style="color:#a08060">합계</span><span>\u20a9${total.toLocaleString()}</span>
     </div>`;
+}
+
+function toggleCatDetail(cid){
+  const el=document.getElementById('cat-detail-'+cid);
+  const arr=document.getElementById('cat-arr-'+cid);
+  if(!el)return;
+  const opening=el.style.display==='none';
+  el.style.display=opening?'block':'none';
+  if(arr)arr.innerHTML=opening?'&#x25B2;':'&#x25BC;';
 }
 
 function renderStats(){
