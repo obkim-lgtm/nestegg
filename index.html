@@ -731,7 +731,7 @@ function save(){
     try{
       const uid=window._fbUser.uid;
       const ref=window._fbDoc(window._fbDb,'users',uid);
-      await window._fbSetDoc(ref,{recs,cats,cfgMap,spBudgets,spCats},{merge:false});
+      await window._fbSetDoc(ref,{recs,cats,cfgMap,spBudgets,spCats},{merge:true});
     }catch(e){console.warn('Firestore save error:',e);}
   },500);
 }
@@ -740,34 +740,36 @@ function save(){
 window._loadFromFirestore=async function(uid){
   try{
     const ref=window._fbDoc(window._fbDb,'users',uid);
-    const snap=await window._fbGetDoc(ref);
-    if(snap.exists()){
-      const d=snap.data();
-      if(d.recs)    recs=d.recs;
-      if(d.cats)    cats=d.cats;
-      if(d.cfgMap)  cfgMap=d.cfgMap;
-      if(d.spBudgets) spBudgets=d.spBudgets;
-      if(d.spCats)  spCats=d.spCats;
-    } else {
-      // Firestore에 데이터 없음 → localStorage 데이터가 있으면 마이그레이션
-      const localRecs=S.get('recs',null);
+    // localStorage 우선: 데이터가 있으면 그대로 사용
+    const localRecs=S.get('recs',null);
+    if(localRecs){
+      // localStorage 데이터 로드
+      recs=localRecs;
       const localCats=S.get('cats',null);
       const localCfg=S.get('cfgMap',null);
       const localSp=S.get('spBudgets',null);
       const localSpCats=S.get('spCats',null);
-      if(localRecs&&localRecs.length>0){
-        if(localRecs)    recs=localRecs;
-        if(localCats)    cats=localCats;
-        if(localCfg)     cfgMap=localCfg;
-        if(localSp)      spBudgets=localSp;
-        if(localSpCats)  spCats=localSpCats;
-        // 즉시 Firestore에 저장
-        await window._fbSetDoc(ref,{recs,cats,cfgMap,spBudgets,spCats});
-        showToast('기존 데이터를 클라우드로 옮겼어요 \uD83D\uDC23');
+      if(localCats)   cats=localCats;
+      if(localCfg)    cfgMap=localCfg;
+      if(localSp)     spBudgets=localSp;
+      if(localSpCats) spCats=localSpCats;
+      // Firestore에 최신 localStorage 데이터 백업 (덮어쓰지 않고 업로드만)
+      window._fbSetDoc(ref,{recs,cats,cfgMap,spBudgets,spCats},{merge:true}).catch(e=>console.warn('Firestore backup error:',e));
+    } else {
+      // localStorage 비어있을 때만 Firestore에서 로드 (새 기기 등)
+      const snap=await window._fbGetDoc(ref);
+      if(snap.exists()){
+        const d=snap.data();
+        if(d.recs)      recs=d.recs;
+        if(d.cats)      cats=d.cats;
+        if(d.cfgMap)    cfgMap=d.cfgMap;
+        if(d.spBudgets) spBudgets=d.spBudgets;
+        if(d.spCats)    spCats=d.spCats;
+        showToast('클라우드에서 데이터를 불러왔어요 ☁️');
       }
+      // localStorage 갱신
+      S.set('recs',recs);S.set('cats',cats);S.set('cfgMap',cfgMap);S.set('spBudgets',spBudgets);S.set('spCats',spCats);
     }
-    // localStorage도 갱신
-    S.set('recs',recs);S.set('cats',cats);S.set('cfgMap',cfgMap);S.set('spBudgets',spBudgets);S.set('spCats',spCats);
     // 사용자 정보 표시
     const user=window._fbUser;
     if(user.photoURL){
