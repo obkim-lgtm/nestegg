@@ -1350,6 +1350,7 @@ function saveEditRec(){
   const a=parseInt(document.getElementById('er-amt').value);
   if(!a||a<=0){showToast('금액을 입력해주세요');return;}
   const dt=document.getElementById('er-date').value;
+  if(!dt){showToast('날짜를 입력해주세요');return;}
   const memo=document.getElementById('er-memo').value.trim()||'소비';
   if(erMode==='special'){
     recs=recs.map(r=>r.id===editingRecId?{...r,amount:a,memo,date:dt,
@@ -1358,6 +1359,9 @@ function saveEditRec(){
     recs=recs.map(r=>r.id===editingRecId?{...r,amount:a,memo,date:dt,
       budgetType:undefined,category:erSelCat||r.category,specialCategory:undefined}:r);
   }
+  // 날짜가 다른 달로 바뀐 경우 해당 달로 이동
+  const[dy,dm]=dt.split('-').map(Number);
+  if(dy!==vy||dm!==vm){vy=dy;vm=dm;}
   save();render();closeMo('mo-edit-rec');
   if(erFromDay)openDay(dt);
   showToast('수정 완료 ✓');
